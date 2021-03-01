@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+    backend:
+        build:
+            context: backend
+        volumes:
+            - ${PWD}/backend:/app
+            - ${HOME}/.ssh:/root/.ssh
+        ports:
+            - 5000:5000
+
+    frontend:
+        build: 
+            context: frontend
+        volumes: 
+            - ${PWD}/frontend:/app
+            - /app/node_modules
+        ports:
+            - 3000:3000
+        environment:
+            - CHOKIDAR_USERPOOLING=true
+

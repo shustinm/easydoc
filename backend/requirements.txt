@@ -1,0 +1,9 @@
+flask
+flask_cors
+gitpython
+mkdocs
+mkdocs-material
+sphinx
+mdx_gh_links
+pallets_sphinx_themes
+python_docs_theme
