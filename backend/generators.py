@@ -4,6 +4,7 @@ from pathlib import Path
 import subprocess
 import os
 import shutil
+import sys
 
 
 @contextlib.contextmanager
@@ -34,6 +35,10 @@ class Generator(ABC):
         """
         raise NotImplementedError
 
+    staticmethod
+    def docker_image():
+        return None
+
 
 class MkdocsGenerator(Generator):
 
@@ -49,6 +54,10 @@ class MkdocsGenerator(Generator):
         res = proc.wait(12)
         if res:
             raise RuntimeError(proc.stderr.read().decode())
+
+    @staticmethod
+    def docker_image():
+        return 'python:mkdocs'
 
 
 class SphinxGenerator(Generator):
@@ -67,11 +76,11 @@ class SphinxGenerator(Generator):
     def generate(self, path: Path, destination: Path):
         conf_path = self.get_file_path("conf.py", path)
         os.system(f"sphinx-build -b dirhtml {conf_path} {destination}")
-    
-        
+
+
 DOXYFILE_NAME = 'Doxyfile'
 class DoxygenGenerator(Generator):
-    
+
     def check(self, path: Path):
         return (path / DOXYFILE_NAME).exists()
 
@@ -99,3 +108,16 @@ class DoxygenGenerator(Generator):
             shutil.rmtree(destination / 'latex')
             os.system(f'mv {destination / "html" / "*"} {str(destination)}')
             shutil.rmtree(destination / 'html')
+
+
+GENERATORS = {
+    'mkdocs': MkdocsGenerator,
+    'sphinx': SphinxGenerator,
+    'doxygen': DoxygenGenerator,
+}
+
+
+if __name__ == '__main__':
+    GENERATORS[sys.argv[1]]().generate(Path(sys.argv[2]), Path(sys.argv[3]))
+    exit()
+

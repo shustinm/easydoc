@@ -1,20 +1,17 @@
 from pathlib import Path
 from git import Repo
-from generators import MkdocsGenerator, SphinxGenerator, DoxygenGenerator, DOXYFILE_NAME
+from generators import GENERATORS
 from flask import current_app
 import shutil
 import logging
+import os
+import docker
 
-DATA_DIR = Path(__file__).parent.absolute() / 'data'
-STATIC_DIR = Path(__file__).parent.absolute() / 'doc'
-GENERATORS = {
-    'mkdocs': MkdocsGenerator(),
-    'sphinx': SphinxGenerator(),
-    'doxygen': DoxygenGenerator()
-}
+BACKEND_ROOT = Path(__file__).parent.absolute()
+DATA_DIR = BACKEND_ROOT / 'data'
+STATIC_DIR = BACKEND_ROOT / 'doc'
 
-DOXYGEN_GENERATOR_NAME = 'doxygen'
-DEFAULT_DOXYFILE_TEMPLATE = 'doxyfile_template.txt'
+running_containers = {}
 
 def as_dir_path(base_dir, project: str, repo: str) -> Path:
     return base_dir / project / repo
@@ -41,20 +38,23 @@ def update_data(project: str, repo: str):
 def update_static(project: str, repo: str):
     src_path = as_dir_path(DATA_DIR, project, repo)
     dest_path = as_dir_path(STATIC_DIR, project, repo)
+    docker_src_path = Path('/app') / 'data' / project / repo
+    docker_dest_path = Path('/app') / 'doc' / project/ repo
 
-    did_generate = False
+    docker_client = docker.client.from_env()
+
     for generator_name, generator in GENERATORS.items():
-        if generator.check(src_path):
-            dest_path.mkdir(parents=True, exist_ok=True)
-            generator.generate(src_path, dest_path / generator_name)
-            did_generate = True
+        if (generator := generator()).check(src_path):
 
-    if not did_generate:
-        # Generate a default doxygen doxyfile and do stuff
-        logging.info(f"Project '{project}' has no docs to be generated, creating default Doxygen docs.")
-        shutil.copy(DEFAULT_DOXYFILE_TEMPLATE, src_path / DOXYFILE_NAME)
-        doxygen = DoxygenGenerator()
-        dest_path.mkdir(parents=True, exist_ok=True)
-        (dest_path / DOXYGEN_GENERATOR_NAME).mkdir(parents=True, exist_ok=True)
-        assert doxygen.check(src_path), 'Something has gone really bad'
-        doxygen.generate(src_path, dest_path / DOXYGEN_GENERATOR_NAME)
+            # Image is not yet running
+            if (img := generator.docker_image()) not in running_containers:
+                volumes = {os.environ['BACKEND_ROOT']: {'bind': '/app', 'mode': 'rw'}}
+                container = docker_client.containers.run(img, detach=True, volumes=volumes, working_dir='/app', stdin_open=True)
+                running_containers[img] = container
+
+            dest_path.mkdir(parents=True, exist_ok=True)
+            exit_status, output = running_containers[img].exec_run(
+                f'python3 generators.py {generator_name} {docker_src_path} {docker_dest_path}',
+                workdir='/app'
+            )
+            current_app.logger.info(output.decode())
