@@ -65,15 +65,10 @@ def search():
     if not query:
         return jsonify(dict())
 
-    # Match project/repo/type
-    items = [str(d) for d in STATIC_DIR.glob("*/*/*") if d.is_dir()]
+    # Match project/repo
+    paths = STATIC_DIR.glob('*/*')
 
-    # Change repo/type to repo:type
-    items = list(map(lambda x: ':'.join(x.rsplit('/', 1)), items))
-
-    reg = re.compile(".*" + query + ".*", re.IGNORECASE)
-
-    return jsonify([i[len('/app/doc/'):] for i in items if reg.match(i)])
+    return jsonify(list(map(lambda p: f'{p.parent.name}/{p.name}', paths)))
 
 
 @app.route('/<string:project>/<string:repo>/')

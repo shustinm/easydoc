@@ -1,5 +1,5 @@
 
-export const BASE_URI = 'http://backend:5000';
+export const BASE_URI = 'http://localhost:5000';
 
 export const API = '/api';
 

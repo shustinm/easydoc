@@ -1,15 +1,12 @@
 import React from 'react';
-import { useHistory } from "react-router-dom";
-import { Avatar, ClickAwayListener, Fade, Icon, IconButton, List, ListItem, makeStyles, Menu, MenuItem, Paper, Typography, withStyles } from '@material-ui/core';
+import {ClickAwayListener, Fade, List, ListItem, makeStyles, Paper, withStyles} from '@material-ui/core';
 import SearchBar from './SearchBar';
 import TextField from '@material-ui/core/TextField';
-import Autocomplete from '@material-ui/lab/Autocomplete';
 
 
 import Axios from 'axios';
 
-import { API, QUERY_API, BASE_URI } from '../api';
-import { BookRounded, DockRounded, VisibilityRounded } from '@material-ui/icons';
+import {BASE_URI, QUERY_API} from '../api';
 
 const useStyles = makeStyles((theme) => ({
     option: {
@@ -64,26 +61,22 @@ function queryData(currentQuery, saveState, saveMenuState) {
 function SiteListView(props) {
     const classes = useStyles();
 
-    const [url, doctool] = props.entry.split(':');
-    const [project, repo] = url.split('/');
-    const title = project + " / " + repo;
+    // const url = props.entry;
+    // const [project, repo] = url.split('/');
+    const title = props.entry;
+    const finalTitle = '<b>' + title + '</b>';
 
-    const reg = new RegExp(props.query, 'gi');
-    const finalTitle = title.replace(reg, function(str) {return '<b>'+str+'</b>'});
-
-    const icons = {
-        "mkdocs": BookRounded,
-        "doxygen": DockRounded,
-        "sphinx": VisibilityRounded,
-    }
+    // const icons = {
+    //     "mkdocs": BookRounded,
+    //     "doxygen": DockRounded,
+    //     "sphinx": VisibilityRounded,
+    // }
 
     return (
         <ListItem button onClick={() => {
-            let path = BASE_URI + '/' + project + '/' + repo + "/" + doctool + "/";
-            window.location.href = path;
+            window.location.href = '/' + title + '/';
         }}>
             <div className={classes.linkDescription} dangerouslySetInnerHTML={{__html: finalTitle}} />
-            {React.createElement(icons[doctool])}
         </ListItem>
     );
 }
@@ -111,7 +104,8 @@ export default function ProjectSearchBar(props) {
                 <Fade in={menuState.showMenu}>
                     <Paper className={classes.autocompletePaper}>
                         <List>
-                            {menuState.entries && menuState.entries.map((entry) => <SiteListView key={entry} query={menuState.query} entry={entry} />)}
+                            {menuState.entries && menuState.entries.map((entry) =>
+                                <SiteListView query={menuState.query} entry={entry} />)}
                         </List>
                     </Paper>
                 </Fade>
