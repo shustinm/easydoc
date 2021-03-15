@@ -1,5 +1,5 @@
 
-export const BASE_URI = 'http://localhost:5000';
+export const BASE_URI = process.env.NODE_ENV == 'production' ? process.env.BACKEND_URL : 'http://localhost:5000';
 
 export const API = '/api';
 

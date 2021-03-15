@@ -17,9 +17,10 @@ services:
         build: 
             context: frontend
         volumes: 
-            - ${PWD}/frontend:/app
+            - ${PWD}/frontend/src:/app/src
         ports:
             - 3000:3000
         environment:
             - CHOKIDAR_USERPOOLING=true
+            - NODE_OPTIONS=--max_old_space_size=4096
 

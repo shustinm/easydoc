@@ -64,7 +64,8 @@ function SiteListView(props) {
     // const url = props.entry;
     // const [project, repo] = url.split('/');
     const title = props.entry;
-    const finalTitle = '<b>' + title + '</b>';
+    const reg = new RegExp(props.query, 'gi');
+    const finalTitle = title.replace(reg, function(str) {return '<b>' + str + '</b>'});
 
     // const icons = {
     //     "mkdocs": BookRounded,
@@ -74,7 +75,7 @@ function SiteListView(props) {
 
     return (
         <ListItem button onClick={() => {
-            window.location.href = '/' + title + '/';
+            window.location.href = BASE_URI + '/' + title + '/';
         }}>
             <div className={classes.linkDescription} dangerouslySetInnerHTML={{__html: finalTitle}} />
         </ListItem>
